@@ -51,3 +51,6 @@ TROUBLESHOOTING.md
 # Test and setup scripts (keep local only)
 read_pdf.py
 setup_check.py
+
+STEP_BY_STEP.md
+DEPLOYMENT.md
