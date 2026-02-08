@@ -85,7 +85,6 @@ LEAVE_POLICIES: Dict[str, Dict[str, Any]] = {
     }
 }
 
-# Mock Employee Data
 EMPLOYEE_DATA: Dict[str, Dict[str, Any]] = {
     "EMP001": {
         "employee_id": "EMP001",
@@ -155,12 +154,10 @@ EMPLOYEE_DATA: Dict[str, Dict[str, Any]] = {
 
 
 def get_employee_by_id(employee_id: str) -> Dict[str, Any] | None:
-    """Retrieve employee data by ID"""
     return EMPLOYEE_DATA.get(employee_id)
 
 
 def get_employee_by_email(email: str) -> Dict[str, Any] | None:
-    """Retrieve employee data by email"""
     for emp in EMPLOYEE_DATA.values():
         if emp["email"].lower() == email.lower():
             return emp
@@ -168,7 +165,6 @@ def get_employee_by_email(email: str) -> Dict[str, Any] | None:
 
 
 def get_leave_policy(country: str, leave_type: str) -> Dict[str, Any] | None:
-    """Retrieve leave policy for a specific country and leave type"""
     country_policies = LEAVE_POLICIES.get(country)
     if not country_policies:
         return None
@@ -176,6 +172,5 @@ def get_leave_policy(country: str, leave_type: str) -> Dict[str, Any] | None:
 
 
 def get_all_leave_types(country: str) -> list[str]:
-    """Get all available leave types for a country"""
     country_policies = LEAVE_POLICIES.get(country, {})
     return list(country_policies.keys())

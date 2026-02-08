@@ -39,6 +39,8 @@ wheels/
 .coverage
 htmlcov/
 .pytest_cache/
+coverage.xml
+*.cover
 
 # GCP
 credentials.json
@@ -56,3 +58,13 @@ STEP_BY_STEP.md
 DEPLOYMENT.md
 
 Gen AI Engineer - Technical Hiring Assignment_2.pdf
+
+BONUS_CHECKLIST.md
+BONUS_FEATURES.md
+SUBMISSION_CHECKLIST.md
+run_tests.sh
+
+deploy.ps1
+
+run_tests.ps1
+

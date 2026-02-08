@@ -43,8 +43,8 @@ class TestCalculateEligibility:
         result = calculate_eligibility(
             employee_id="EMP001",
             leave_type="PTO",
-            start_date="2024-06-01",
-            end_date="2024-06-05",
+            start_date="2026-06-01",
+            end_date="2026-06-05",
             num_days=5
         )
         

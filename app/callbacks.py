@@ -11,14 +11,20 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+# Import metrics if available
+try:
+    from app.metrics import record_pii_detection, record_security_block
+    METRICS_AVAILABLE = True
+except ImportError:
+    METRICS_AVAILABLE = False
 
-# PII patterns to detect and mask
+
+# PII patterns to detect and mask (India-relevant)
 PII_PATTERNS = {
     "email": r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-    "ssn": r'\b\d{3}-\d{2}-\d{4}\b',
-    "phone": r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b',
+    "phone": r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b',  # US/India phone formats
     "credit_card": r'\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b',
-    "passport": r'\b[A-Z]{1,2}\d{6,9}\b'
+    "passport": r'\b[A-Z]{1,2}\d{6,9}\b'  # International passport format
 }
 
 # Blocked content patterns
@@ -39,6 +45,7 @@ class BeforeModelCallback:
     """
     
     def __init__(self):
+        self.total_calls = 0
         self.pii_detected_count = 0
         self.blocked_content_count = 0
     
@@ -54,6 +61,7 @@ class BeforeModelCallback:
             Dict with processed messages and metadata
         """
         logger.info("BeforeModelCallback: Processing messages")
+        self.total_calls += 1
         
         processed_messages = []
         pii_detected = []
@@ -80,12 +88,22 @@ class BeforeModelCallback:
             processed_message["content"] = masked_content
             processed_messages.append(processed_message)
         
-        # Log security events
+        # Log security events and record metrics
         if pii_detected:
             logger.warning(f"BeforeModelCallback: PII detected and masked: {pii_detected}")
+            if METRICS_AVAILABLE:
+                for pii_type in pii_detected:
+                    record_pii_detection(pii_type)
+        
+        if blocked and METRICS_AVAILABLE:
+            record_security_block()
         
         result = {
+            "allowed": not blocked,
+            "blocked": blocked,
             "messages": processed_messages if not blocked else [],
+            "pii_detected": pii_detected,
+            "modified_messages": processed_messages if not blocked else [],
             "metadata": {
                 "pii_detected": pii_detected,
                 "pii_count": len(pii_detected),
@@ -96,6 +114,7 @@ class BeforeModelCallback:
         
         if blocked:
             result["error"] = "Content blocked due to security policy violation"
+            result["blocked_reason"] = "Security policy violation detected"
         
         return result
     
@@ -128,8 +147,9 @@ class BeforeModelCallback:
     def get_stats(self) -> Dict[str, int]:
         """Get callback statistics"""
         return {
-            "pii_detected_count": self.pii_detected_count,
-            "blocked_content_count": self.blocked_content_count
+            "total_calls": self.total_calls,
+            "pii_detections": self.pii_detected_count,
+            "content_blocked": self.blocked_content_count
         }
 
 
@@ -143,6 +163,7 @@ class AfterModelCallback:
     """
     
     def __init__(self):
+        self.total_calls = 0
         self.response_count = 0
         self.error_count = 0
         self.total_tokens = 0
@@ -160,6 +181,7 @@ class AfterModelCallback:
         """
         logger.info("AfterModelCallback: Processing response")
         
+        self.total_calls += 1
         self.response_count += 1
         
         # Extract response content
@@ -181,6 +203,7 @@ class AfterModelCallback:
         self._log_interaction(response, is_valid)
         
         return {
+            "valid": is_valid,
             "response": response,
             "metadata": {
                 "is_valid": is_valid,
@@ -229,10 +252,11 @@ class AfterModelCallback:
     def get_stats(self) -> Dict[str, Any]:
         """Get callback statistics"""
         return {
+            "total_calls": self.total_calls,
             "response_count": self.response_count,
             "error_count": self.error_count,
             "total_tokens": self.total_tokens,
-            "avg_tokens": self.total_tokens / max(self.response_count, 1)
+            "average_tokens": self.total_tokens / max(self.response_count, 1)
         }
 
 

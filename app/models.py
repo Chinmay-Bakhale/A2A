@@ -9,7 +9,7 @@ from datetime import datetime
 
 class ChatRequest(BaseModel):
     """Request model for chat endpoint"""
-    message: str = Field(..., description="User's message to the agent")
+    message: str = Field(..., min_length=1, description="User's message to the agent")
     session_id: Optional[str] = Field(None, description="Session ID for conversation continuity")
     employee_id: Optional[str] = Field(None, description="Employee ID for personalized responses")
     
@@ -45,6 +45,7 @@ class HealthResponse(BaseModel):
     """Health check response"""
     status: str = Field(..., description="Service status")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+    service: str = Field(default="Leave Policy Assistant")
     version: str = Field(default="1.0.0")
 
 
